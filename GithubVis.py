@@ -10,15 +10,16 @@ class GithubVis:
         # Using the given Key File
         is_prod = os.environ.get('IS_HEROKU', None)
 
-        if is_prod:
-            print("IN PRODUCTION")
-            key = os.environ.get('GITHUB_API')
-            print("API KEY:", key)
-        else:
-            print("IN TESTING")
-            key_file = open('./access_key/key.txt')
-            key = key_file.readline().rstrip('\n')
-            print("API KEY:", key)
+        print("IN PRODUCTION")
+        key = os.environ.get('GITHUB_API')
+        print("API KEY:", key)
+
+        '''
+        print("IN TESTING")
+        key_file = open('./access_key/key.txt')
+        key = key_file.readline().rstrip('\n')
+        print("API KEY:", key)
+        '''
 
         # Authenticate to Github API
         print("Authenticating to Github API with key -", key, '...')
