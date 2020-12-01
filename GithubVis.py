@@ -4,18 +4,21 @@ import seaborn as sns
 from datetime import datetime, timedelta
 import os
 
-
 class GithubVis:
     # Initialization Method
     def __init__(self, user, repo, load_from_csv=True, save_csv=False):
         # Using the given Key File
         is_prod = os.environ.get('IS_HEROKU', None)
-        key = None
+
         if is_prod:
+            print("IN PRODUCTION")
             key = os.environ.get('GITHUB_API')
+            print("API KEY:", key)
         else:
+            print("IN TESTING")
             key_file = open('./access_key/key.txt')
             key = key_file.readline().rstrip('\n')
+            print("API KEY:", key)
 
         # Authenticate to Github API
         print("Authenticating to Github API with key -", key, '...')
