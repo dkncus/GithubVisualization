@@ -2,13 +2,20 @@ from github import Github
 import pandas as pd
 import seaborn as sns
 from datetime import datetime, timedelta
+import os
+
 
 class GithubVis:
     # Initialization Method
     def __init__(self, user, repo, load_from_csv=True, save_csv=False):
         # Using the given Key File
-        key_file = open('./access_key/key.txt')
-        key = key_file.readline().rstrip('\n')
+        is_prod = os.environ.get('IS_HEROKU', None)
+        key = None
+        if is_prod:
+            key = os.environ.get('GITHUB_API')
+        else:
+            key_file = open('./access_key/key.txt')
+            key = key_file.readline().rstrip('\n')
 
         # Authenticate to Github API
         print("Authenticating to Github API with key -", key, '...')

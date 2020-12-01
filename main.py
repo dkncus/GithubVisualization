@@ -19,7 +19,7 @@ def create_visualizations():
         st.subheader("Data from all commits")
         st.dataframe(g.df)
     except:
-        print("Github Repo ERROR")
+        st.subheader("Error Connecting to GitHub API.")
 
 # Set the theme, add necessary imports
 sns.set_theme()
