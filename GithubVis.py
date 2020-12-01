@@ -8,10 +8,8 @@ class GithubVis:
     # Initialization Method
     def __init__(self, user, repo, load_from_csv=True, save_csv=False):
         # Using the given Key File
-        is_prod = os.environ.get('IS_HEROKU', None)
-
         print("IN PRODUCTION")
-        key = os.environ.get('GITHUB_API')
+        key = os.environ.get('GITHUB_API_KEY')
         print("API KEY:", key)
 
         '''
