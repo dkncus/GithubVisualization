@@ -319,11 +319,13 @@ class GithubVis:
         # Zip the 2 lists (running_commits) and (days_between) and place in DataFrame
         if show_authors:
             vis_data = pd.DataFrame(list(zip(days_between, running_commits)), columns=['Date', 'Change Count'])
+            print(vis_data)
             for item in authors_change_counts:
                 vis_data[item] = authors_change_counts[item]
         else:
             vis_data = pd.DataFrame(list(zip(days_between, running_commits)), columns=['Date', 'Commit Count'])
 
+        print(vis_data)
         plot = sns.lineplot(data=vis_data, palette='mako')
         plot.set(xlabel="Days Since Initial Commit", ylabel="Number of Commits", title="Repository Changes over Time")
         return plot
