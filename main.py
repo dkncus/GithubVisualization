@@ -6,13 +6,14 @@ def create_visualizations():
     try:
         st.subheader("Fetching diagnostics and commit history on this repository...")
         g = GithubVis(user, repo, load_from_csv=False, save_csv=False)
+        print("Data Collected. Building visualization...")
 
         commits_over_time = g.visualize_commits_over_time(show_authors=True)
-        commits_over_time.figure.savefig("commits.png", format='eps')
+        commits_over_time.figure.savefig("commits.png")
         changes_over_time = g.visualize_changes_over_time(show_authors=True)
-        changes_over_time.figure.savefig("changes.png", format='eps')
-        authors = g.visualize_authors()
-        authors.figure.savefig("authors.png", format='eps')
+        changes_over_time.figure.savefig("changes.png")
+
+        print("Figures Saved.")
 
         subheader = user + '/' + repo
         st.header(subheader)
@@ -20,11 +21,10 @@ def create_visualizations():
         st.image("commits.png", width=800)
         st.subheader("Total Codebase Changes over Time")
         st.image("changes.png", width=800)
-        st.subheader("Top 5 Contributors")
-        st.image("authors.png", width=800)
         st.subheader("Data from all commits")
         st.dataframe(g.df)
-    except:
+    except Exception as e:
+        print(e)
         st.error("Error Connecting to GitHub API.")
 
 # Set the theme, add necessary imports

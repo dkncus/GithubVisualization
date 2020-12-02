@@ -93,7 +93,6 @@ class GithubVis:
 
             # Decrement number of Threads
             threads_remaining = threads_remaining - batch_size
-            print(threads_remaining, "Threads remaining")
 
         # Sort Dataframe by Commit Date
         if save_csv:
@@ -155,16 +154,12 @@ class GithubVis:
     # Visualize developers that have the most commits
     def visualize_authors(self):
         # Get the data from the developers
-        devs = g.get_developers_data()
+        devs = self.get_developers_data()
 
         # Set the dataframe
         data = pd.DataFrame.from_dict(devs, orient='index', columns=["Username", "Name", "Commits", "Changes"])
-        users_changes = data.sort_values(by=['Changes'], ascending=False)
         users_commits = data.sort_values(by=['Commits'], ascending=False)
-
         plot = sns.barplot(data=users_commits[0:5], x='Name', y='Commits', palette='Blues_d')
-        for item in plot.get_xticklabels():
-            item.set_rotation(30)
 
         return plot
 
