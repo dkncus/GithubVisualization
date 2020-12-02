@@ -57,7 +57,7 @@ class GithubVis:
             thread = threading.Thread(target = self.threaded_insert, args = (commit,), daemon=True)
             threads.append(thread)
 
-        batch_size = 15
+        batch_size = 10
         batch = 0
         threads_remaining = len(threads)
         print("Starting", len(threads), "Threads")
@@ -76,8 +76,9 @@ class GithubVis:
 
             # Await all the threads completion
             while not self.check_threads_complete(threads[start:end]):
-                time.sleep(0.2)
+                time.sleep(0.01)
 
+            print("Batch finished. Joining threads...")
             # Join all the threads in the list
             for thread in threads[start:end]:
                 thread.join()
@@ -103,7 +104,6 @@ class GithubVis:
         for thread in threads:
             if thread.is_alive():
                 return False
-        print("All threads are completed.")
         return True
 
     # Uses proper threading to insert the data into the table
