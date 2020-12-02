@@ -9,6 +9,7 @@ import time                                 # For sleeping the system
 class GithubVis:
     # Initialization Method
     def __init__(self, user, repo, load_from_csv=True, save_csv=False):
+
         key = os.environ.get('GITHUB_API_KEY')
         print("API KEY:", key)
 
@@ -56,7 +57,7 @@ class GithubVis:
             thread = threading.Thread(target = self.threaded_insert, args = (commit,), daemon=True)
             threads.append(thread)
 
-        batch_size = 10
+        batch_size = 15
         batch = 0
         threads_remaining = len(threads)
         print("Starting", len(threads), "Threads")
@@ -369,13 +370,10 @@ class GithubVis:
         # Zip the 2 lists (running_commits) and (days_between) and place in DataFrame
         if show_authors:
             vis_data = pd.DataFrame(list(zip(days_between, running_commits)), columns=['Date', 'Change Count'])
-            print(vis_data)
             for item in authors_change_counts:
                 vis_data[item] = authors_change_counts[item]
         else:
             vis_data = pd.DataFrame(list(zip(days_between, running_commits)), columns=['Date', 'Commit Count'])
-
-        print(vis_data)
         plot = sns.lineplot(data=vis_data, palette='mako')
         plot.set(xlabel="Days Since Initial Commit", ylabel="Number of Commits", title="Repository Changes over Time")
         return plot
