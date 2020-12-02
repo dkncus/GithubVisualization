@@ -38,6 +38,8 @@ class GithubVis:
         # Create Pandas Dataframe
         self.data_head = {'SHA':[], 'ETAG':[], 'Author':[], 'Username':[], 'Additions':[], 'Deletions':[], 'Total':[], 'Date':[]}
 
+        self.df_additions = []
+
         if load_from_csv:
             self.df = pd.read_csv("commit_data.csv")
         else:
@@ -51,40 +53,45 @@ class GithubVis:
 
         threads = []
         for commit in commits:
-            thread = threading.Thread(target = self.threaded_insert, args = (commit,))
+            thread = threading.Thread(target = self.threaded_insert, args = (commit,), daemon=True)
             threads.append(thread)
 
-        print("Starting", len(threads), "Threads")
-
-        batch_size = 20
+        batch_size = 10
         batch = 0
         threads_remaining = len(threads)
+        print("Starting", len(threads), "Threads")
+
         while threads_remaining > 0:
-            start = (batch_size + 1) * batch
-            end = (batch_size + 1) * batch + batch_size
+            start = (batch_size) * batch
+            if threads_remaining < batch_size:
+                end = (batch_size) * batch + threads_remaining
+            else:
+                end = (batch_size) * batch + batch_size
 
             print("Starting Batch", batch, ", Threads[", start, ',', end, ']')
             #Start a batch of threads
-            # 0 - [0:20]
-            # 1 - [21:41]
-            # 2 - [42:62]
-            # 3 - [63:83]
             for thread in threads[start:end]:
                 thread.start()
 
             # Await all the threads completion
             while not self.check_threads_complete(threads[start:end]):
-                time.sleep(0.01)
+                time.sleep(0.2)
 
             # Join all the threads in the list
             for thread in threads[start:end]:
                 thread.join()
 
+            #Add each row to the dataframe
+            for row in self.df_additions:
+                self.df = self.df.append(row, ignore_index=True)
+            self.df_additions = []
+
             # Increment the Current Batch
             batch += 1
 
             # Decrement number of Threads
-            threads_remaining -= batch_size
+            threads_remaining = threads_remaining - batch_size
+            print(threads_remaining, "Threads remaining")
 
         # Sort Dataframe by Commit Date
         if save_csv:
@@ -94,11 +101,11 @@ class GithubVis:
     def check_threads_complete(self, threads):
         for thread in threads:
             if thread.is_alive():
-                print("Threads still alive!")
                 return False
-        print("Threads are dead.")
+        print("All threads are completed.")
         return True
 
+    # Uses proper threading to insert the data into the table
     def threaded_insert(self, commit):
         data = commit.raw_data
 
@@ -122,8 +129,8 @@ class GithubVis:
             'Date': commit.stats.last_modified
         }
 
-        # Append the created row to the dataframe
-        self.df = self.df.append(row, ignore_index=True)
+        # Append the created row to the dataframe if the Mutex lock is opened
+        self.df_additions.append(row)
 
         return 0
 
