@@ -9,15 +9,15 @@ import time                                 # For sleeping the system
 class GithubVis:
     # Initialization Method
     def __init__(self, user, repo, load_from_csv=True, save_csv=False):
-        '''
         key = os.environ.get('GITHUB_API_KEY')
         print("API KEY:", key)
-        '''
 
+        '''
         print("IN TESTING")
         key_file = open('./access_key/key.txt')
         key = key_file.readline().rstrip('\n')
         print("API KEY:", key)
+        '''
 
         # Authenticate to Github API
         print("Authenticating to Github API with key -", key, '...')
