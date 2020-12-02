@@ -1,23 +1,23 @@
-from github import Github
-import pandas as pd
-import seaborn as sns
-from datetime import datetime, timedelta
-import os
+from github import Github                   # For authentication to the Github API
+import pandas as pd                         # For creating and managing dataframes
+import seaborn as sns                       # For visualizing the organized data
+from datetime import datetime, timedelta    # For organizing dataframe data
+import os                                   # For fetching API key
+import threading                            # For fetching data from github API concurrently
+import time                                 # For sleeping the system
 
 class GithubVis:
     # Initialization Method
     def __init__(self, user, repo, load_from_csv=True, save_csv=False):
-        # Using the given Key File
-        print("IN PRODUCTION")
+        '''
         key = os.environ.get('GITHUB_API_KEY')
         print("API KEY:", key)
-
         '''
+
         print("IN TESTING")
         key_file = open('./access_key/key.txt')
         key = key_file.readline().rstrip('\n')
         print("API KEY:", key)
-        '''
 
         # Authenticate to Github API
         print("Authenticating to Github API with key -", key, '...')
@@ -41,57 +41,91 @@ class GithubVis:
         if load_from_csv:
             self.df = pd.read_csv("commit_data.csv")
         else:
-            self.df = self.fetch_data(save_csv=save_csv)
+            self.df = pd.DataFrame(self.data_head)
+            self.fetch_data()
 
     # Fetch the data from a given Username and Repository
-    def fetch_data(self, save_csv=False, diagnostics_on=False):
-        df = pd.DataFrame(self.data_head)
+    def fetch_data(self, save_csv=False):
         # Get every commit from that repo
         commits = self.repo.get_commits()
 
+        threads = []
         for commit in commits:
-            # Diagnostic Data
-            if diagnostics_on:
-                print("Commit", commit.sha, '-', commit.etag)
-                print('\tAuthor:', commit.author)
-                print('\tStats :')
-                print('\t\tAdditions:', commit.stats.additions)
-                print('\t\tDeletions:', commit.stats.deletions)
-                print('\t\tTotal    :', commit.stats.total)
-                print('\t\tDate     :', commit.stats.last_modified)
-            else:
-                print(commit.sha)
+            thread = threading.Thread(target = self.threaded_insert, args = (commit,))
+            threads.append(thread)
 
-            # Error handle a null user
+        print("Starting", len(threads), "Threads")
+
+        batch_size = 20
+        batch = 0
+        threads_remaining = len(threads)
+        while threads_remaining > 0:
+            start = (batch_size + 1) * batch
+            end = (batch_size + 1) * batch + batch_size
+
+            print("Starting Batch", batch, ", Threads[", start, ',', end, ']')
+            #Start a batch of threads
+            # 0 - [0:20]
+            # 1 - [21:41]
+            # 2 - [42:62]
+            # 3 - [63:83]
+            for thread in threads[start:end]:
+                thread.start()
+
+            # Await all the threads completion
+            while not self.check_threads_complete(threads[start:end]):
+                time.sleep(0.01)
+
+            # Join all the threads in the list
+            for thread in threads[start:end]:
+                thread.join()
+
+            # Increment the Current Batch
+            batch += 1
+
+            # Decrement number of Threads
+            threads_remaining -= batch_size
+
+        # Sort Dataframe by Commit Date
+        if save_csv:
+            print("SAVING CSV FILE")
+            self.df.to_csv('commit_data.csv', index=False)
+
+    def check_threads_complete(self, threads):
+        for thread in threads:
+            if thread.is_alive():
+                print("Threads still alive!")
+                return False
+        print("Threads are dead.")
+        return True
+
+    def threaded_insert(self, commit):
+        data = commit.raw_data
+
+        # Error handle a null user
+        try:
+            name = data['commit']['author']['name']
+            username = data['author']['login']
+        except:
             name = ''
             username = ''
-            try:
-                name = commit.author.name
-                username = commit.author.login
-            except:
-                print('No author!')
 
-            stats = commit.stats
+        # Create commit data row
+        row = {
+            'SHA': data['sha'],
+            'ETAG': None,
+            'Author': name,
+            'Username': username,
+            'Additions': data['stats']['additions'],
+            'Deletions': data['stats']['deletions'],
+            'Total': data['stats']['total'],
+            'Date': commit.stats.last_modified
+        }
 
-            # Create commit data row
-            row = {
-                'SHA':      commit.sha,
-                'ETAG':     commit.etag,
-                'Author':   name,
-                'Username': username,
-                'Additions':stats.additions,
-                'Deletions':stats.deletions,
-                'Total':    stats.total,
-                'Date':     stats.last_modified
-            }
+        # Append the created row to the dataframe
+        self.df = self.df.append(row, ignore_index=True)
 
-            # Append the created row to the dataframe
-            df = df.append(row, ignore_index=True)
-
-        if save_csv:
-            df.to_csv('commit_data.csv', index=False)
-
-        return df
+        return 0
 
     # Gets a unique dict of developers with keys to their names
     def get_developers_data(self):
@@ -349,8 +383,7 @@ if __name__ == '__main__':
     sns.set_theme()
 
     # Create Visualization Tool
-    g = GithubVis(load_from_csv=False, save_csv=False)
-
+    g = GithubVis('phadej', 'github', load_from_csv=False, save_csv=True)
     commits_over_time = g.visualize_commits_over_time(show_authors=True)
     commits_over_time.figure.savefig("commits.png")
     plt.show()
