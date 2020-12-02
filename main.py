@@ -9,9 +9,9 @@ def create_visualizations():
         print("Data Collected. Building visualization...")
 
         commits_over_time = g.visualize_commits_over_time(show_authors=True)
-        commits_over_time.figure.savefig("commits.png")
+        commits_over_time.figure.savefig("commits.png", dpi=300)
         changes_over_time = g.visualize_changes_over_time(show_authors=True)
-        changes_over_time.figure.savefig("changes.png")
+        changes_over_time.figure.savefig("changes.png", dpi=300)
 
         print("Figures Saved.")
 
